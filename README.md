@@ -11,7 +11,7 @@ The script iterates through all files in the working directory, extracts desired
 2. Description of distanceMaps.py
 You need to insert an active Google Maps API key in the code. The program creates a distance matrix for destinations listed in the resulting database and returns the distance in kilometers, which is then updated in the database.
 
-3. Used Languages and Libraries:
+3. Built with:
 
 -Python 3.12.3
 
