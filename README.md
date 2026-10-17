@@ -1,22 +1,52 @@
-# Excel-Database-based-on-order-documents
+# Excel Database from Freight Orders
 
-Purpose
-The program is designed to create a database of contractors based on issued orders. It then allows checking the distance of the assigned carrier route using the Google Maps API.
+> My first real data-engineering project: turning a pile of freight-forwarding order PDFs into a structured database of **which carrier drove which route, and at what rate**.
 
-THE REPOSITORY CONTAINS SAMPLE INPUT AND OUTPUT DATA
+## Background
 
-1. Description of pdfToExcelDataBase_v1.02.py
-The script iterates through all files in the working directory, extracts desired information from PDF files using regular expressions, and places them in an XLSX file according to a predefined schema.
+In freight forwarding, the history of transport orders holds valuable business knowledge: which carriers have already driven a given route and how much they charged. That knowledge was locked inside many individual PDF orders, so answering a simple question such as *"who has already done this lane, and for how much?"* meant opening documents one by one.
 
-2. Description of distanceMaps.py
-You need to insert an active Google Maps API key in the code. The program creates a distance matrix for destinations listed in the resulting database and returns the distance in kilometers, which is then updated in the database.
+This tool extracts that history automatically and builds an Excel database, enriched with real road distances from Google Maps, so that carrier rates can be compared **per kilometre** – a common basis for pricing new orders and choosing carriers.
 
-3. Built with:
+## How it works
 
-  -Python 3.12.3
+1. **Extract** – `pdfToExcelDataBase_v1.02.py` scans all PDF orders in the working directory and uses regular expressions to pull out the order date, the carrier's tax ID (NIP) and name, loading and unloading countries and places, the loading reference and the freight price.
+2. **Load** – the data is written into `database.xlsx` (openpyxl) using a fixed schema.
+3. **Enrich** – `distanceMaps.py` sends every loading/unloading pair to the Google Maps Distance Matrix API and fills in the driving distance in km (`Database_with_Distance.xlsx`).
+4. **Analyse** – the sheet calculates the **price per km** for every order, making rates on similar routes directly comparable.
 
-  -openpyxl 3.1.4
+## Output schema
 
-  -PyPDF2 3.0.1
+| Column | Meaning |
+|---|---|
+| Nr pliku | Source PDF file |
+| Data zlecenia | Order date |
+| NIP | Carrier tax ID |
+| Nazwa zleceniobiorcy | Carrier name and address |
+| Kierunek z / Kierunek do | Loading / unloading country |
+| Ref załadunku | Loading reference |
+| Miejscowość załadunku / rozładunku | Loading / unloading place |
+| Cena USD | Freight price |
+| Dystans km | Driving distance (Google Maps) |
+| Cena/km | Price per kilometre |
 
-  -googlemaps 4.10.0
+## Sample data
+
+`input_data_samples/` contains two **anonymised** sample orders (fictional companies, people and addresses). `output_data_samples/` shows the resulting database before and after distance enrichment.
+
+## Usage
+
+1. Put the PDF orders in the working directory and run `python pdfToExcelDataBase_v1.02.py` – this creates `database.xlsx`.
+2. Insert your Google Maps API key in `distanceMaps.py` and run it – this creates `Database_with_Distance.xlsx`.
+
+## Tech stack
+
+Python 3.12 · PyPDF2 · openpyxl · googlemaps (Distance Matrix API) · regular expressions
+
+## Limitations
+
+The extraction patterns are tailored to one specific order template; other document layouts require adapting the regular expressions. Google Maps API usage may incur costs above the free tier.
+
+## License
+
+GPL-3.0
